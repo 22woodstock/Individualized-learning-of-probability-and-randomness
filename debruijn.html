@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>드 브루인 수열 & 오일러 회로 — Shuffle Lab</title>
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/debruijn.css">
+</head>
+<body>
+
+<nav class="site-nav">
+  <a href="index.html" class="brand">Shuffle Lab <span class="tag">/ 무작위성 실험실</span></a>
+  <ul>
+    <li><a href="coin.html" class="nav-link">동전 던지기</a></li>
+    <li><a href="shuffle.html" class="nav-link">리플 셔플</a></li>
+    <li><a href="debruijn.html" class="nav-link current">드 브루인 · 오일러 회로</a></li>
+  </ul>
+</nav>
+
+<header class="module-header wrap">
+  <div class="kicker">EXPERIMENT 03 — 그래프를 직접 그려서 조건을 찾기</div>
+  <h1>드 브루인 그래프에서 오일러 회로 찾기</h1>
+  <p class="lede">
+    정점은 길이 n−1인 문자열, 간선은 길이 n인 문자열입니다. 시작 정점을 고르고 간선을 하나씩
+    선택해 나가면서, 그래프의 모든 간선을 한 번씩만 지나 다시 출발점으로 돌아오는 회로 —
+    <strong>오일러 회로</strong>를 완성해 보세요. 완성된 경로가 바로 드 브루인 수열입니다.
+  </p>
+</header>
+
+<main class="wrap">
+
+  <div class="controls">
+    <div class="control-field">
+      <label for="k-select">알파벳 크기 k</label>
+      <select id="k-select">
+        <option value="2">2 (0, 1)</option>
+        <option value="3">3 (0, 1, 2)</option>
+      </select>
+    </div>
+    <div class="control-field">
+      <label for="n-select">간선 길이 n</label>
+      <select id="n-select"></select>
+    </div>
+    <div class="control-field">
+      <button class="btn" id="generate-btn">새 그래프 생성</button>
+    </div>
+    <div class="spacer"></div>
+    <div class="control-field">
+      <button class="btn secondary" id="reset-btn">다시 시도</button>
+    </div>
+    <div class="control-field">
+      <button class="btn secondary" id="autosolve-btn">컴퓨터가 풀어보기</button>
+    </div>
+  </div>
+
+  <div class="lab">
+
+    <div class="graph-panel">
+      <div class="graph-status" id="graph-status">정점을 클릭해 시작점을 고르세요</div>
+      <svg id="graph-svg" viewBox="0 0 640 560" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+
+    <aside class="side-panel">
+
+      <div class="panel-box">
+        <h4>만들어지는 수열</h4>
+        <div class="sequence-display" id="sequence-display">—</div>
+        <div class="progress-row">
+          <span id="progress-text">0 / 0 간선</span>
+          <span id="vertex-count-text">0개 정점</span>
+        </div>
+        <div class="progress-bar"><span id="progress-bar-fill"></span></div>
+      </div>
+
+      <div class="panel-box">
+        <h4>지금 상태</h4>
+        <p class="status-message" id="status-message">
+          k와 n을 고르고 "새 그래프 생성"을 누른 뒤, 그래프에서 시작할 정점을 클릭하세요.
+        </p>
+        <div class="side-actions">
+          <button class="btn secondary" id="side-reset-btn">초기화</button>
+        </div>
+      </div>
+
+      <div class="panel-box">
+        <h4>오일러 회로 존재 조건</h4>
+        <div class="condition-row">
+          <span class="condition-dot" id="cond-balanced-dot"></span>
+          <span>모든 정점: 진입 간선 수 = 진출 간선 수</span>
+        </div>
+        <div class="condition-row">
+          <span class="condition-dot" id="cond-connected-dot"></span>
+          <span>그래프가 하나로 연결되어 있음</span>
+        </div>
+      </div>
+
+      <div class="panel-box">
+        <h4>정점별 남은 간선</h4>
+        <table class="degree-table">
+          <thead><tr><th>정점</th><th>나가는 길</th><th>들어오는 길</th></tr></thead>
+          <tbody id="degree-table-body"></tbody>
+        </table>
+      </div>
+
+    </aside>
+  </div>
+
+  <section class="theory">
+    <div class="theory-card">
+      <h3>왜 막다른 길에 갇힐까?</h3>
+      <p>
+        이 그래프는 처음부터 모든 정점에서 나가는 길과 들어오는 길의 수가 같도록(k개씩) 설계되어
+        있습니다. 그런데도 아무 간선이나 먼저 골라 가다 보면, 출발점으로 돌아가는 길목의 간선을
+        미리 써버려서 더 나아갈 수 없는 상태 — <strong>막힘</strong>에 빠질 수 있습니다.
+      </p>
+      <p>
+        이것이 바로 오일러 회로가 "존재한다"는 것과 "아무렇게나 찾아진다"는 것이 다른 이유입니다.
+        회로는 분명히 존재하지만, 순서를 신중히 골라야 실제로 완성할 수 있습니다.
+      </p>
+    </div>
+    <div class="theory-card">
+      <h3>오일러 회로 정리</h3>
+      <p>
+        방향 그래프에서 모든 간선을 정확히 한 번씩 지나 출발점으로 돌아오는 오일러 회로가
+        존재하려면, 다음 두 조건이면 충분합니다.
+      </p>
+      <p>
+        ① 모든 정점에서 진입 간선 수와 진출 간선 수가 같다.<br>
+        ② 간선이 있는 정점들이 모두 하나로 연결되어 있다.
+      </p>
+      <p>
+        드 브루인 그래프는 구조상 이 두 조건을 항상 만족합니다. "컴퓨터가 풀어보기" 버튼은
+        Hierholzer 알고리즘으로, 막히지 않도록 경로를 되짚어가며 회로를 완성하는 방법을
+        보여줍니다.
+      </p>
+    </div>
+    <div class="theory-card bridge">
+      <h3>이 원리가 유전체 조립으로 이어지는 방법</h3>
+      <p>
+        유전체를 통째로 읽을 수 없기 때문에, 짧은 조각(read)을 길이 k인 부분 문자열(k-mer)로
+        잘라 정점을 (k−1)-mer로, 간선을 k-mer로 삼아 지금과 똑같은 방식의 드 브루인 그래프를
+        만듭니다. 이 그래프에서 오일러 경로를 찾는 것이, 조각들을 원래 순서로 이어 붙여 전체
+        유전체 서열을 복원하는 것과 같은 문제가 됩니다. k를 얼마로 잡느냐에 따라 그래프의
+        모양과 조립의 정확도가 달라지는데, 이 부분은 다른 모듈에서 k값을 직접 바꿔가며
+        확인할 수 있습니다.
+      </p>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">Shuffle Lab — 확률과 무작위성을 조작해보는 학습형 웹앱</footer>
+
+<script src="js/debruijn.js"></script>
+</body>
+</html>
