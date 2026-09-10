@@ -1,0 +1,297 @@
+/* ===========================================================
+   Shuffle Lab — Module 3: 드 브루인 수열 & 오일러 회로
+   =========================================================== */
+
+.module-header{
+  padding: 56px 0 28px;
+}
+
+.module-header .kicker{
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  color: var(--accent-amber);
+  margin-bottom: 14px;
+}
+
+.module-header h1{
+  font-size: clamp(1.8rem, 3.6vw, 2.6rem);
+  max-width: 22ch;
+}
+
+.module-header .lede{
+  max-width: 66ch;
+  font-size: 1.02rem;
+}
+
+.lab{
+  padding-bottom: 40px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 22px;
+  align-items: start;
+}
+
+@media (max-width: 980px){
+  .lab{ grid-template-columns: 1fr; }
+}
+
+/* ---------- controls ---------- */
+.controls{
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 14px;
+  padding: 18px 20px;
+  background: var(--bg-panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-m);
+  margin-bottom: 18px;
+}
+
+.control-field{
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.control-field label{
+  font-size: 0.78rem;
+  color: var(--ink-faint);
+  font-family: var(--font-mono);
+}
+
+.control-field select{
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  padding: 8px 10px;
+  border-radius: var(--radius-s);
+  border: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--ink);
+}
+
+.controls .spacer{ flex: 1 1 auto; }
+
+/* ---------- graph canvas panel ---------- */
+.graph-panel{
+  background: var(--bg-panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-m);
+  padding: 8px;
+  position: relative;
+}
+
+.graph-panel svg{
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.graph-status{
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  color: var(--ink-soft);
+}
+.graph-status.active{ border-color: var(--accent-amber); color: var(--accent-amber); }
+.graph-status.stuck{ border-color: var(--accent-brick); color: var(--accent-brick); background: var(--accent-brick-soft); }
+.graph-status.complete{ border-color: var(--accent-teal); color: var(--accent-teal); background: var(--accent-teal-soft); }
+
+/* svg elements */
+.edge-path{
+  fill: none;
+  stroke: var(--line);
+  stroke-width: 2.2;
+  cursor: pointer;
+  transition: stroke 0.12s ease, stroke-width 0.12s ease, opacity 0.12s ease;
+}
+.edge-path.available{ stroke: var(--ink-soft); stroke-width: 2.6; }
+.edge-path.available:hover{ stroke: var(--accent-amber); stroke-width: 3.4; }
+.edge-path.used{ stroke: var(--accent-amber); stroke-width: 3; cursor: default; }
+.edge-path.inactive{ opacity: 0.35; cursor: not-allowed; }
+
+.edge-hit{
+  fill: none;
+  stroke: transparent;
+  stroke-width: 16;
+  cursor: pointer;
+}
+.edge-hit.locked{ cursor: not-allowed; }
+
+.edge-label{
+  font-family: var(--font-mono);
+  font-size: 11px;
+  fill: var(--ink-faint);
+  pointer-events: none;
+  user-select: none;
+}
+.edge-label.used{ fill: var(--accent-amber); font-weight: 600; }
+
+.vertex-circle{
+  fill: var(--bg-panel);
+  stroke: var(--ink);
+  stroke-width: 2;
+  cursor: pointer;
+  transition: fill 0.12s ease, stroke 0.12s ease;
+}
+.vertex-circle.current{ fill: var(--accent-amber); stroke: var(--accent-amber); }
+.vertex-circle.start-marker{ stroke-width: 3; }
+.vertex-circle.stuck{ fill: var(--accent-brick-soft); stroke: var(--accent-brick); }
+.vertex-circle.pickable{ }
+.vertex-circle.pickable:hover{ fill: var(--accent-amber-soft); }
+
+.vertex-label{
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  fill: var(--ink);
+  text-anchor: middle;
+  dominant-baseline: central;
+  pointer-events: none;
+  user-select: none;
+}
+.vertex-label.current{ fill: #fff; }
+
+/* ---------- sidebar ---------- */
+.side-panel{
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.panel-box{
+  background: var(--bg-panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-m);
+  padding: 16px 18px;
+}
+
+.panel-box h4{
+  margin: 0 0 10px;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+}
+
+.sequence-display{
+  font-family: var(--font-mono);
+  font-size: 1.05rem;
+  line-height: 1.7;
+  word-break: break-all;
+  min-height: 1.7em;
+  color: var(--ink);
+}
+.sequence-display .cursor-char{
+  color: var(--accent-amber);
+  font-weight: 700;
+}
+
+.progress-row{
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  color: var(--ink-faint);
+  margin-top: 8px;
+}
+
+.progress-bar{
+  margin-top: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--grid-line);
+  overflow: hidden;
+}
+.progress-bar > span{
+  display: block;
+  height: 100%;
+  background: var(--accent-amber);
+  width: 0%;
+  transition: width 0.2s ease;
+}
+
+.condition-row{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+  padding: 6px 0;
+  color: var(--ink-soft);
+}
+
+.condition-dot{
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--ink-faint);
+  flex: none;
+}
+.condition-dot.ok{ background: var(--accent-teal); }
+.condition-dot.bad{ background: var(--accent-brick); }
+
+.status-message{
+  font-size: 0.92rem;
+  color: var(--ink-soft);
+  min-height: 3.2em;
+}
+.status-message.stuck{ color: var(--accent-brick); }
+.status-message.complete{ color: var(--accent-teal); }
+
+.side-actions{
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.degree-table{
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+}
+.degree-table th, .degree-table td{
+  text-align: left;
+  padding: 4px 6px;
+  border-bottom: 1px solid var(--grid-line);
+  color: var(--ink-soft);
+}
+.degree-table th{ color: var(--ink-faint); font-weight: 500; }
+.degree-table td.zero{ color: var(--ink-faint); }
+
+/* ---------- theory sections ---------- */
+.theory{
+  padding: 20px 0 90px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 22px;
+}
+
+@media (max-width: 780px){
+  .theory{ grid-template-columns: 1fr; }
+}
+
+.theory-card{
+  background: var(--bg-panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-m);
+  padding: 22px 24px;
+}
+
+.theory-card h3{
+  font-size: 1.1rem;
+}
+
+.theory-card p{ font-size: 0.94rem; margin-bottom: 0.8em; }
+.theory-card p:last-child{ margin-bottom: 0; }
+
+.theory-card.bridge{
+  grid-column: 1 / -1;
+  background: linear-gradient(135deg, var(--bg-panel) 0%, var(--accent-teal-soft) 220%);
+}
