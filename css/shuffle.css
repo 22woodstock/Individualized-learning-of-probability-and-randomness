@@ -1,0 +1,92 @@
+/* ===========================================================
+   Shuffle Lab — Module 2: 리플 셔플
+   =========================================================== */
+
+.deck-panel{ padding: 16px; }
+.deck-head{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.deck-head .graph-status{ position: static; }
+.toggle{ font-size: 0.88rem; color: var(--ink-soft); display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
+.toggle input{ accent-color: var(--accent-amber); }
+
+.deck{
+  display: grid;
+  grid-template-columns: repeat(13, minmax(0, 1fr));
+  gap: 5px;
+}
+.card{
+  position: relative;
+  aspect-ratio: 5 / 7;
+  border-radius: 5px;
+  border: 1px solid var(--line);
+  background: var(--bg-panel);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 0 4px;
+  overflow: hidden;
+  font: inherit;
+  color: var(--ink);
+  cursor: default;
+  box-shadow: 0 1px 0 rgba(27,35,51,0.06);
+  will-change: transform;
+}
+.card .band{ position: absolute; top: 0; left: 0; right: 0; height: 38%; }
+.card .num{ font-family: var(--font-mono); font-size: clamp(0.62rem, 1.4vw, 0.86rem); font-weight: 600; }
+.card.from-l{ box-shadow: 0 0 0 2px var(--accent-teal); }
+.card.from-r{ box-shadow: 0 0 0 2px var(--accent-brick); }
+.card:not(:disabled){ cursor: pointer; }
+.card:not(:disabled):hover{ border-color: var(--ink); transform: translateY(-2px); }
+.card.moved{ box-shadow: 0 0 0 3px var(--accent-amber); z-index: 1; }
+.card.wrong{ box-shadow: 0 0 0 3px var(--accent-brick); }
+.deck.magic{ margin: 12px 0 18px; }
+.deck.magic .card .band{ height: 26%; }
+
+.deck-legend{ font-size: 0.84rem; margin: 12px 0 0; }
+
+.meter{ height: 6px; border-radius: 999px; background: var(--grid-line); overflow: hidden; margin-top: 6px; }
+.meter span{ display: block; height: 100%; width: 100%; background: var(--accent-brick); transition: width 0.3s ease; }
+
+.scatter-frame{ fill: var(--bg); stroke: var(--grid-line); }
+.chart-box .pt{ stroke: #fff; stroke-width: 0.6; }
+.chart-box .series.faint{ stroke: #C9CDD5; stroke-width: 1.4; }
+
+.mono-table td{ font-family: var(--font-mono); font-size: 0.84rem; }
+.mono-table tr.on td{ background: var(--accent-amber-soft); color: var(--ink); font-weight: 600; }
+.mono-table tr.ref td{ color: var(--accent-teal); font-weight: 600; }
+
+.legend-list{ margin-top: 12px; display: flex; flex-direction: column; gap: 4px; font-size: 0.8rem; color: var(--ink-faint); }
+.legend-list .on{ color: var(--ink); font-weight: 600; }
+.legend-list .sw{ display: inline-block; width: 16px; height: 3px; background: #C9CDD5; vertical-align: middle; margin-right: 6px; }
+.legend-list .sw.amber{ background: var(--accent-amber); }
+
+.magic-stats{ margin-top: 6px; }
+
+.alloc{ display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 16px; }
+.pt-chip{
+  width: 40px;
+  height: 46px;
+  border-radius: 6px;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  color: #fff;
+}
+.pt-chip small{ font-size: 0.62rem; font-weight: 500; opacity: 0.85; }
+.pt-chip.a{ background: var(--accent-teal); }
+.pt-chip.b{ background: var(--accent-amber); }
+
+@media (max-width: 520px){
+  .deck{ gap: 3px; }
+  .card .num{ font-size: 0.6rem; }
+}

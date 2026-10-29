@@ -3,8 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>리플 셔플 — Shuffle Lab</title>
+<title>리플 셔플과 컷오프 현상 — Shuffle Lab</title>
 <link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/shuffle.css">
 </head>
 <body>
 
@@ -14,17 +15,198 @@
     <li><a href="coin.html" class="nav-link">동전 던지기</a></li>
     <li><a href="shuffle.html" class="nav-link current">리플 셔플</a></li>
     <li><a href="debruijn.html" class="nav-link">드 브루인 · 오일러 회로</a></li>
+    <li><a href="paths.html" class="nav-link">경로 모델링</a></li>
   </ul>
 </nav>
 
-<main class="wrap coming-soon">
-  <h1>리플 셔플 모듈 — 준비 중</h1>
-  <p>몇 번을 섞어야 "충분히 무작위"해지는지, 베이어–다이아코니스 컷오프 현상을 직접
-     셔플하며 확인하는 모듈입니다. 다음 세션에서 만들어집니다.</p>
-  <a href="debruijn.html" class="btn">먼저 완성된 드 브루인 모듈 보기</a>
+<header class="module-header wrap">
+  <div class="kicker">EXPERIMENT 02 — 몇 번 섞어야 충분한가</div>
+  <h1>리플 셔플과 컷오프 현상</h1>
+  <p class="lede">
+    카드를 반으로 나눠 양손으로 촤르륵 섞는 것이 리플 셔플입니다. 한두 번 섞은 덱에는 처음 순서의
+    흔적이 그대로 남아 있습니다. 직접 섞어 보면서 흔적이 언제 사라지는지, 그리고 왜 52장은
+    <strong>7번</strong>을 기준으로 삼는지 확인해 보세요.
+  </p>
+</header>
+
+<main class="wrap">
+
+  <div class="controls">
+    <div class="control-field">
+      <label for="deck-size">카드 수</label>
+      <select id="deck-size">
+        <option value="8">8장</option>
+        <option value="13">13장</option>
+        <option value="26">26장</option>
+        <option value="52" selected>52장</option>
+      </select>
+    </div>
+    <div class="control-field">
+      <button class="btn amber" id="riffle-1">리플 셔플 1번</button>
+    </div>
+    <div class="control-field">
+      <button class="btn" id="riffle-7">7번 더 섞기</button>
+    </div>
+    <div class="spacer"></div>
+    <div class="control-field">
+      <button class="btn secondary" id="deck-reset">처음 순서로</button>
+    </div>
+    <div class="control-field">
+      <button class="btn secondary" id="deck-random">완전 무작위 덱 (비교용)</button>
+    </div>
+  </div>
+
+  <div class="lab">
+    <div class="graph-panel deck-panel">
+      <div class="deck-head">
+        <div class="graph-status" id="deck-status">처음 순서 그대로</div>
+        <label class="toggle"><input type="checkbox" id="color-rising"> 상승 수열로 색칠</label>
+      </div>
+      <div class="deck" id="deck" aria-label="카드 덱"></div>
+      <p class="deck-legend" id="deck-legend">
+        카드 위 색 띠는 <b>처음 위치</b>를 나타냅니다. 처음에는 파랑에서 주황까지 차례로 놓여 있습니다.
+      </p>
+    </div>
+
+    <aside class="side-panel">
+      <div class="panel-box">
+        <h4>지금 덱</h4>
+        <div class="stat-grid">
+          <div class="stat"><span class="k">섞은 횟수</span><span class="v" id="s-k">0</span></div>
+          <div class="stat"><span class="k">상승 수열</span><span class="v" id="s-rise">1</span></div>
+          <div class="stat wide"><span class="k">완전 무작위와의 거리 (이론)</span><span class="v" id="s-tv">1.000</span>
+            <div class="meter"><span id="tv-meter"></span></div>
+          </div>
+        </div>
+        <p class="status-message" id="verdict">아직 한 번도 섞지 않았어요.</p>
+      </div>
+      <div class="panel-box">
+        <h4>처음 위치 → 지금 위치</h4>
+        <div class="chart-box"><svg id="scatter" viewBox="0 0 260 240" role="img" aria-label="카드의 처음 위치와 지금 위치"></svg></div>
+        <p class="tiny">점 하나가 카드 한 장입니다. 점이 몇 개의 오르막 줄로 늘어서 있으면 아직 덜 섞인 것입니다.</p>
+      </div>
+    </aside>
+  </div>
+
+  <!-- 컷오프 -->
+  <section class="section-block">
+    <h2>컷오프: 한동안 그대로이다가 갑자기 떨어진다</h2>
+    <p class="sub">
+      k번 섞은 덱이 완전 무작위 덱과 얼마나 다른지를 <strong>총변동거리</strong>로 잽니다. 1이면 완전히 구별되고,
+      0이면 전혀 구별할 수 없습니다. 52장은 4번 섞을 때까지 거의 1에 머물다가 5~8번 사이에서 급격히 떨어집니다.
+      이렇게 어느 지점에서 갑자기 바뀌는 것을 <strong>컷오프 현상</strong>이라고 합니다.
+    </p>
+    <div class="split">
+      <div class="chart-box"><svg id="cutoff-svg" viewBox="0 0 640 300" role="img" aria-label="섞은 횟수에 따른 총변동거리"></svg></div>
+      <div class="panel-box flat">
+        <h4 id="cutoff-title">52장</h4>
+        <div class="table-scroll"><table class="plain mono-table" id="cutoff-table"></table></div>
+        <div class="legend-list" id="cutoff-legend"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 마술 -->
+  <section class="section-block">
+    <h2>카드 마술: 옮긴 카드 찾기</h2>
+    <p class="sub">
+      덱을 몇 번 섞은 뒤, 컴퓨터가 몰래 카드 한 장을 빼서 아무 데나 꽂습니다. 덜 섞인 덱에서는 그 카드가
+      혼자 튀는 <strong>상승 수열</strong>을 만들기 때문에 찾아낼 수 있습니다. 직접 찾아보고, 마술사의 방법과 비교해 보세요.
+    </p>
+    <div class="controls compact">
+      <div class="control-field">
+        <label for="magic-k">마술 전에 섞는 횟수</label>
+        <select id="magic-k">
+          <option value="1">1번</option><option value="2">2번</option>
+          <option value="3" selected>3번</option><option value="4">4번</option>
+          <option value="5">5번</option><option value="7">7번</option>
+        </select>
+      </div>
+      <div class="control-field"><button class="btn amber" id="magic-start">마술 시작</button></div>
+      <div class="control-field"><button class="btn secondary" id="magic-reveal" disabled>모르겠어요, 정답 보기</button></div>
+    </div>
+    <p class="status-message" id="magic-msg">"마술 시작"을 누르면 카드 한 장이 몰래 옮겨집니다. 그 카드를 클릭하세요.</p>
+    <div class="deck magic" id="magic-deck"></div>
+    <div class="split magic-stats">
+      <div class="chart-box"><svg id="magic-svg" viewBox="0 0 640 240" role="img" aria-label="섞은 횟수별 마술 성공률"></svg></div>
+      <div class="panel-box flat">
+        <h4>마술사는 몇 번까지 통할까?</h4>
+        <p class="tiny">52장 덱으로 횟수마다 200번씩 마술을 해 본 성공률입니다.</p>
+        <button class="btn small" id="magic-sim">성공률 계산하기</button>
+        <p class="tiny" id="magic-sim-msg"></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 임상시험 -->
+  <section class="section-block">
+    <h2>임상시험 무작위배정으로</h2>
+    <p class="sub">
+      새 약을 시험할 때 환자를 약 그룹(A)과 가짜약 그룹(B)에 나눕니다. 순서를 예측할 수 있으면 연구자가 다음
+      환자를 고를 때 무의식적으로라도 영향을 줄 수 있어서(선택 편향), 배정 순서는 예측할 수 없어야 합니다.
+      A 10장, B 10장을 차례로 쌓은 배정 카드를 리플 셔플로 섞는다고 해 봅시다.
+    </p>
+    <div class="controls compact">
+      <div class="control-field">
+        <label for="alloc-k">섞는 횟수: <span id="alloc-k-val">1</span>번</label>
+        <input type="range" id="alloc-k" min="0" max="8" value="1">
+      </div>
+      <div class="control-field"><button class="btn secondary small" id="alloc-again">다시 섞기</button></div>
+    </div>
+    <div class="alloc" id="alloc"></div>
+    <div class="table-scroll"><table class="plain mono-table" id="alloc-table"></table></div>
+    <p class="note" id="alloc-note"></p>
+  </section>
+
+  <section class="theory">
+    <div class="theory-card">
+      <h3>리플 셔플의 수학 모형</h3>
+      <p>
+        길버트, 섀넌, 리즈가 만든 모형(GSR)은 이렇습니다. 52장을 떼어 나눌 때 위쪽 장수는 동전 52번을 던져 앞면이
+        나온 수처럼 정해지고, 섞을 때는 남은 장수가 많은 손에서 카드가 떨어질 확률이 더 큽니다.
+        실제 사람의 리플 셔플을 관찰해 보면 이 모형과 잘 맞습니다.
+      </p>
+    </div>
+    <div class="theory-card">
+      <h3>상승 수열과 2<sup>k</sup></h3>
+      <p>
+        한 번 섞으면 왼손 묶음과 오른손 묶음, 두 줄이 서로 끼워질 뿐 각 줄 안의 순서는 그대로입니다. 그래서
+        처음 순서대로 이어진 번호의 줄(상승 수열)이 최대 2개가 됩니다. k번 섞으면 최대 2<sup>k</sup>개입니다.
+        52장을 4번 섞어도 줄은 최대 16개라서, 26개쯤 되는 무작위 덱과는 확실히 다릅니다.
+      </p>
+    </div>
+    <div class="theory-card">
+      <h3>왜 하필 7번인가</h3>
+      <p>
+        바이어와 다이아코니스(1992)는 상승 수열의 개수만으로 k번 섞은 덱의 확률을 정확히 계산했습니다.
+        52장은 6번 섞으면 거리가 0.61, 7번이면 0.33, 그 뒤로는 섞을 때마다 절반씩 줄어듭니다. 7번이 "충분히 섞였다"의
+        기준으로 쓰이는 이유입니다. 카드가 n장이면 컷오프는 대략 (3/2)log<sub>2</sub>n번 근처에서 일어납니다.
+      </p>
+    </div>
+    <div class="theory-card">
+      <h3>실제 임상시험은 어떻게 하나</h3>
+      <p>
+        실제 시험에서는 카드를 손으로 섞지 않고 컴퓨터 난수로 배정표를 만듭니다. 그룹 크기를 맞추려고 4명, 6명 같은
+        작은 묶음 안에서 섞기도 하고(블록 무작위배정), 다음 배정을 연구자가 미리 볼 수 없게 숨깁니다(배정 은폐).
+        목표는 같습니다. 다음 배정을 예측할 수 없게 만드는 것입니다.
+      </p>
+    </div>
+    <div class="theory-card bridge">
+      <h3>다음 실험: 드 브루인 수열과 오일러 회로</h3>
+      <p>
+        무작위를 만드는 법을 보았으니, 이번에는 반대로 모든 경우를 빠짐없이 한 번씩 담는 수열을 만들어 봅니다.
+        이 원리는 유전체 조립으로 이어집니다.
+      </p>
+      <p><a class="btn" href="debruijn.html">드 브루인 실험실로 →</a></p>
+    </div>
+  </section>
+
 </main>
 
 <footer class="site-footer">Shuffle Lab — 확률과 무작위성을 조작해보는 학습형 웹앱</footer>
 
+<script src="js/svg-util.js"></script>
+<script src="js/shuffle-math.js"></script>
+<script src="js/shuffle.js"></script>
 </body>
 </html>

@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>경로 모델링 — Shuffle Lab</title>
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/paths.css">
+</head>
+<body>
+
+<nav class="site-nav">
+  <a href="index.html" class="brand">Shuffle Lab <span class="tag">/ 무작위성 실험실</span></a>
+  <ul>
+    <li><a href="coin.html" class="nav-link">동전 던지기</a></li>
+    <li><a href="shuffle.html" class="nav-link">리플 셔플</a></li>
+    <li><a href="debruijn.html" class="nav-link">드 브루인 · 오일러 회로</a></li>
+    <li><a href="paths.html" class="nav-link current">경로 모델링</a></li>
+  </ul>
+</nav>
+
+<header class="module-header wrap">
+  <div class="kicker">EXPERIMENT 04 — 오일러 회로에서 이어지는 실험실</div>
+  <h1>경로 모델링: 지도 위의 길을 그래프로</h1>
+  <p class="lede">
+    캠퍼스나 동네 사진을 올리고 그 위에 장소(점)와 길(선)을 그리면 그래프가 됩니다. 같은 그래프라도
+    <strong>무엇을 묻느냐</strong>에 따라 완전히 다른 문제가 됩니다. 네 가지 질문을 직접 풀어 보고,
+    어떤 질문은 항상 빠르게 풀리고 어떤 질문은 답이 없거나 매우 어려운 이유를 확인해 보세요.
+  </p>
+  <a class="btn secondary next-link" href="debruijn.html">← 드 브루인 · 오일러 회로 실험실</a>
+</header>
+
+<main class="wrap">
+
+  <div class="tabs" role="tablist" aria-label="문제 고르기">
+    <button class="tab" role="tab" data-tab="draw" aria-selected="true">✏️ 지도 그리기</button>
+    <button class="tab" role="tab" data-tab="mst" aria-selected="false">① 모든 장소 잇기 <span class="badge teal">항상 풀림</span></button>
+    <button class="tab" role="tab" data-tab="sp" aria-selected="false">② 두 곳 사이 최단 경로 <span class="badge teal">항상 풀림</span></button>
+    <button class="tab" role="tab" data-tab="euler" aria-selected="false">③ 모든 길 한 번씩 <span class="badge amber">조건부</span></button>
+    <button class="tab" role="tab" data-tab="ham" aria-selected="false">④ 모든 장소 한 번씩 <span class="badge brick">어려움</span></button>
+  </div>
+
+  <div class="lab">
+    <div class="graph-panel map-panel">
+      <div class="graph-status" id="map-status">빈 곳을 눌러 장소를 만드세요</div>
+      <svg id="map" viewBox="0 0 900 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="장소와 길 그래프">
+        <g id="layer-bg"></g>
+        <g id="layer-edges"></g>
+        <g id="layer-nodes"></g>
+      </svg>
+      <div class="map-foot" id="map-foot"></div>
+    </div>
+
+    <aside class="side-panel">
+
+      <!-- ✏️ 그리기 -->
+      <section class="tab-panel" data-panel="draw">
+        <div class="panel-box">
+          <h4>예시 불러오기</h4>
+          <div class="row">
+            <select id="preset">
+              <option value="campus">외대부고 캠퍼스 (발표 PPT)</option>
+              <option value="six">크루스칼 예시 6곳 (발표 PPT)</option>
+              <option value="triangle">세 건물: 잇기 ≠ 빨리 가기</option>
+              <option value="house">한붓그리기 집</option>
+              <option value="konigsberg">쾨니히스베르크의 다리 7개</option>
+              <option value="empty">빈 화면</option>
+            </select>
+            <button class="btn small" id="load-preset">불러오기</button>
+          </div>
+          <p class="tiny" id="preset-about"></p>
+        </div>
+
+        <div class="panel-box">
+          <h4>배경 사진</h4>
+          <div class="row">
+            <label class="btn small secondary file-btn">사진 올리기<input type="file" id="bg-file" accept="image/*"></label>
+            <button class="btn small secondary" id="bg-clear" disabled>사진 지우기</button>
+          </div>
+          <div class="control-field slim">
+            <label for="bg-opacity">사진 진하기</label>
+            <input type="range" id="bg-opacity" min="10" max="100" value="60">
+          </div>
+          <p class="tiny">사진은 이 브라우저 안에서 밑그림으로만 쓰이고, 어디에도 전송되거나 저장되지 않습니다.</p>
+        </div>
+
+        <div class="panel-box">
+          <h4>그리는 방법</h4>
+          <div class="seg" role="radiogroup" aria-label="도구">
+            <button class="seg-btn on" data-tool="make" role="radio" aria-checked="true">장소·길 만들기</button>
+            <button class="seg-btn" data-tool="erase" role="radio" aria-checked="false">지우기</button>
+          </div>
+          <ul class="howto">
+            <li><b>빈 곳</b>을 누르면 장소가 생겨요.</li>
+            <li><b>장소 두 개</b>를 차례로 누르면 길이 생겨요. 이어서 다른 장소를 누르면 계속 이어집니다.</li>
+            <li>장소를 <b>끌면</b> 옮겨져요.</li>
+            <li><b>길</b>을 누르면 비용을 바꿀 수 있어요. 처음엔 화면 거리로 자동 계산됩니다.</li>
+          </ul>
+        </div>
+
+        <div class="panel-box" id="edit-box">
+          <h4>선택한 것</h4>
+          <div id="edit-body"><p class="tiny">장소나 길을 누르면 여기서 고칠 수 있어요.</p></div>
+        </div>
+
+        <div class="panel-box">
+          <div class="row between">
+            <span class="mono tiny-ink" id="graph-count">장소 0 · 길 0</span>
+            <button class="btn small secondary" id="clear-all">전체 지우기</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ① 최소 신장 트리 -->
+      <section class="tab-panel" data-panel="mst" hidden>
+        <div class="panel-box">
+          <h4>모든 장소를 가장 싸게 잇기</h4>
+          <p class="small">모든 장소가 서로 오갈 수 있도록 길을 고르되, 비용 합이 가장 작게. 고리(사이클)를 만드는 길은 이미 이어진 곳을 또 잇는 낭비입니다.</p>
+          <div class="seg">
+            <button class="seg-btn on" data-mst-mode="me">직접 골라 보기</button>
+            <button class="seg-btn" data-mst-mode="kruskal">크루스칼 보기</button>
+          </div>
+        </div>
+        <div class="panel-box" id="mst-me">
+          <p class="status-message" id="mst-me-msg">길을 눌러 골라 보세요. 다시 누르면 빠집니다.</p>
+          <div class="stat-grid">
+            <div class="stat"><span class="k">고른 길</span><span class="v" id="mst-me-count">0</span></div>
+            <div class="stat"><span class="k">내 비용</span><span class="v" id="mst-me-cost">0</span></div>
+          </div>
+          <div class="btn-row top-gap"><button class="btn small secondary" id="mst-me-clear">다 지우기</button></div>
+        </div>
+        <div class="panel-box" id="mst-k" hidden>
+          <div class="btn-row">
+            <button class="btn small amber" id="mst-step">한 단계</button>
+            <button class="btn small" id="mst-all">끝까지</button>
+            <button class="btn small secondary" id="mst-reset">처음부터</button>
+          </div>
+          <p class="status-message top-gap" id="mst-k-msg">비용이 싼 길부터 차례로 봅니다. 고리가 생기면 버립니다.</p>
+          <div class="edge-list" id="mst-list"></div>
+        </div>
+        <div class="panel-box" id="mst-result" hidden></div>
+      </section>
+
+      <!-- ② 최단 경로 -->
+      <section class="tab-panel" data-panel="sp" hidden>
+        <div class="panel-box">
+          <h4>두 곳 사이를 가장 빨리 가기</h4>
+          <p class="status-message" id="sp-msg">출발할 장소를 누르세요.</p>
+          <div class="stat-grid">
+            <div class="stat"><span class="k">출발 → 도착</span><span class="v small-v" id="sp-ends">—</span></div>
+            <div class="stat"><span class="k">내 길 비용</span><span class="v" id="sp-mine">—</span></div>
+          </div>
+          <div class="btn-row top-gap">
+            <button class="btn small secondary" id="sp-reset">출발·도착 다시 고르기</button>
+          </div>
+        </div>
+        <div class="panel-box">
+          <h4>다익스트라 알고리즘</h4>
+          <p class="small">아직 확정하지 않은 곳 중 가장 가까운 곳을 하나씩 확정해 나갑니다. 비용이 음수가 아니면 한번 확정한 거리는 나중에 더 짧아지지 않습니다.</p>
+          <div class="btn-row">
+            <button class="btn small amber" id="sp-step" disabled>한 단계</button>
+            <button class="btn small" id="sp-all" disabled>끝까지</button>
+          </div>
+          <p class="status-message top-gap" id="sp-algo-msg"></p>
+          <label class="toggle top-gap"><input type="checkbox" id="sp-mst"> 최소 연결망(①) 위의 길과 비교</label>
+          <p class="small" id="sp-mst-msg"></p>
+        </div>
+      </section>
+
+      <!-- ③ 오일러 -->
+      <section class="tab-panel" data-panel="euler" hidden>
+        <div class="panel-box">
+          <h4>모든 길을 한 번씩 지나기 (한붓그리기)</h4>
+          <div class="verdict" id="eu-verdict"></div>
+          <p class="small">점 위의 숫자는 그 장소에 붙은 길의 수입니다. 빨간 점은 길이 <b>홀수</b> 개인 장소입니다.</p>
+        </div>
+        <div class="panel-box">
+          <h4>직접 해 보기</h4>
+          <p class="status-message" id="eu-msg">출발할 장소를 누르세요.</p>
+          <div class="progress-row"><span id="eu-progress">0 / 0 길</span></div>
+          <div class="progress-bar"><span id="eu-bar"></span></div>
+          <div class="btn-row top-gap">
+            <button class="btn small amber" id="eu-solve">히어홀저로 풀기</button>
+            <button class="btn small secondary" id="eu-reset">다시 하기</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ④ 해밀턴 -->
+      <section class="tab-panel" data-panel="ham" hidden>
+        <div class="panel-box">
+          <h4>모든 장소를 한 번씩 돌기</h4>
+          <div id="ham-stats"><p class="small">계산 중…</p></div>
+          <div class="btn-row top-gap">
+            <button class="btn small amber" id="ham-cycle">가장 짧은 한 바퀴</button>
+            <button class="btn small" id="ham-path">가장 짧은 경로 (돌아오지 않음)</button>
+          </div>
+          <p class="small top-gap" id="ham-show-msg"></p>
+        </div>
+        <div class="panel-box">
+          <h4>직접 돌아 보기</h4>
+          <p class="status-message" id="ham-msg">출발할 장소를 누르고, 길로 이어진 장소를 차례로 누르세요. 이미 간 곳은 다시 못 갑니다.</p>
+          <div class="btn-row"><button class="btn small secondary" id="ham-reset">다시 하기</button></div>
+        </div>
+        <div class="panel-box flat" id="ham-bound"></div>
+      </section>
+
+    </aside>
+  </div>
+
+  <section class="section-block">
+    <h2>네 가지 질문 한눈에 보기</h2>
+    <p class="sub">같은 지도에서도 "장소를 한 번씩인가, 길을 한 번씩인가", "잇기만 하면 되나, 실제로 돌아야 하나"에 따라 문제가 달라집니다.</p>
+    <div class="table-scroll">
+      <table class="plain summary">
+        <tr><th>질문</th><th>문제 이름</th><th>푸는 방법</th><th>아무 지도에나 항상?</th><th>이유</th></tr>
+        <tr><td>① 모든 장소를 가장 싸게 잇기</td><td>최소 신장 트리</td><td>크루스칼 (싼 길부터, 고리면 버리기)</td><td><span class="badge teal">항상 풀림</span></td><td>지도가 하나로 이어져 있기만 하면 됩니다. 매트로이드 구조라서 욕심쟁이 방법이 항상 최적입니다.</td></tr>
+        <tr><td>② 두 곳 사이를 가장 빨리 가기</td><td>최단 경로</td><td>다익스트라</td><td><span class="badge teal">항상 풀림</span></td><td>길 비용이 음수가 아니면 됩니다. 실제 거리·시간은 항상 0 이상입니다. ①의 길과는 다를 수 있습니다.</td></tr>
+        <tr><td>③ 모든 길을 한 번씩 지나기</td><td>오일러 경로·회로</td><td>홀수 장소 세기 → 히어홀저</td><td><span class="badge amber">조건부</span></td><td>길이 홀수 개인 장소가 0개 또는 2개일 때만 답이 있습니다. 답이 있으면 빠르게 찾습니다.</td></tr>
+        <tr><td>④ 모든 장소를 한 번씩 돌기</td><td>해밀턴 경로 · 외판원 문제</td><td>모든 경우 비교 (16곳까지)</td><td><span class="badge brick">어려움</span></td><td>답이 없을 수도 있고, 장소가 늘면 경우의 수가 폭발합니다. 빠르고 정확한 방법이 알려져 있지 않습니다.</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <section class="theory">
+    <div class="theory-card">
+      <h3>매트로이드: 욕심내도 되는 문제</h3>
+      <p>
+        "고리 없는 길 묶음"은 세 가지 규칙을 만족합니다. 아무것도 안 고른 것도 고리가 없고, 고리 없는 묶음에서 길을 빼도
+        고리가 없고, 작은 묶음은 큰 묶음에서 길 하나를 빌려 와 고리 없이 키울 수 있습니다. 이 구조를 <strong>매트로이드</strong>라고 하고,
+        매트로이드에서는 가장 좋은 것부터 고르는 욕심쟁이(그리디) 방법이 항상 최적입니다. ①을 크루스칼로 풀어도 되는 이유입니다.
+      </p>
+    </div>
+    <div class="theory-card">
+      <h3>욕심이 틀리는 경우</h3>
+      <p>
+        1원, 4원, 5원 동전으로 8원을 만들 때 큰 것부터 고르면 5+1+1+1로 4개지만, 4+4면 2개로 충분합니다. 이 문제는
+        매트로이드가 아니라서 욕심쟁이 방법이 틀립니다. "한 장소에 길은 2개까지", "예산 안에서" 같은 조건이 ①에 붙어도
+        매트로이드가 깨질 수 있습니다.
+      </p>
+    </div>
+    <div class="theory-card">
+      <h3>잇기와 빨리 가기는 다르다</h3>
+      <p>
+        "세 건물" 예시를 불러와 보세요. A–B 1, B–C 1, A–C 1.5일 때 최소 연결망은 A–B, B–C(합 2)입니다. 그런데 그 연결망을
+        따라 A에서 C로 가면 2가 걸리고, 직접 가면 1.5입니다. 전체를 싸게 잇는 것과 두 곳 사이를 빨리 가는 것은 목표가 다릅니다.
+      </p>
+    </div>
+    <div class="theory-card">
+      <h3>오일러와 쾨니히스베르크</h3>
+      <p>
+        1736년 오일러는 쾨니히스베르크의 다리 7개를 한 번씩 건너는 산책이 불가능함을 보였습니다. 한 장소를 지나갈 때마다 들어오는
+        길과 나가는 길이 한 쌍씩 쓰이므로, 출발점과 도착점이 아닌 장소는 길이 짝수 개여야 합니다. 땅 4곳이 모두 홀수라서 불가능합니다.
+        드 브루인 실험실의 방향 있는 그래프에서는 "들어오는 길 = 나가는 길"이 같은 역할을 합니다.
+      </p>
+    </div>
+    <div class="theory-card bridge">
+      <h3>발표 PPT와 비교하기</h3>
+      <p>
+        "외대부고 캠퍼스" 예시는 발표 PPT의 13곳과 비용을 그대로 옮긴 것입니다. ①에서 크루스칼을 끝까지 돌리면 최소 비용이
+        <strong>102</strong>이고, 2–9와 9–8의 비용이 12로 같아서 최소 연결망이 <strong>2가지</strong>입니다. ④에서는 PPT 코드와 같은 기준으로
+        해밀턴 경로 <strong>126개</strong>, 그중 한 바퀴로 닫히지 않는 것 <strong>100개</strong>가 나옵니다. 7–2 길은 PPT에 비용이 없어서 14로 넣었으니,
+        원본 값을 알면 길을 눌러 고쳐 보세요.
+      </p>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">Shuffle Lab — 확률과 무작위성을 조작해보는 학습형 웹앱</footer>
+
+<script src="js/graph-algos.js"></script>
+<script src="js/paths-presets.js"></script>
+<script src="js/paths.js"></script>
+</body>
+</html>
